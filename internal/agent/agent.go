@@ -200,8 +200,6 @@ func (a *Agent) Run(opts *tool.RunOptions, ctx context.Context) ([]tool.Output, 
 					Message:   block.Text,
 					Timestamp: time.Now(),
 				}
-				// TODO(t-dabasinskas): Remove this once we update UI
-				logger.With("message", block.Text).Debug("Agent message.")
 			case "tool_use":
 				isError := false
 				resultBlockContent := ""
