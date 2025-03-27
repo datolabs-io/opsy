@@ -38,7 +38,7 @@ type Status string
 
 // Agent is a struct that contains the state of the agent.
 type Agent struct {
-	client        anthropic.Client
+	client        *anthropic.Client
 	ctx           context.Context
 	cfg           config.Configuration
 	logger        *slog.Logger
@@ -88,7 +88,8 @@ func New(opts ...Option) *Agent {
 	}
 
 	if a.cfg.Anthropic.APIKey != "" {
-		a.client = anthropic.NewClient(option.WithAPIKey(a.cfg.Anthropic.APIKey))
+		c := anthropic.NewClient(option.WithAPIKey(a.cfg.Anthropic.APIKey))
+		a.client = &c
 	}
 
 	a.logger.WithGroup("config").With("max_tokens", a.cfg.Anthropic.MaxTokens).With("model", a.cfg.Anthropic.Model).
@@ -119,7 +120,7 @@ func WithLogger(logger *slog.Logger) Option {
 }
 
 // WithClient sets the client for the agent.
-func WithClient(client anthropic.Client) Option {
+func WithClient(client *anthropic.Client) Option {
 	return func(a *Agent) {
 		a.client = client
 	}
@@ -178,7 +179,6 @@ func (a *Agent) Run(opts *tool.RunOptions, ctx context.Context) ([]tool.Output, 
 			msg.ToolChoice = anthropic.ToolChoiceUnionParam{
 				OfToolChoiceAuto: &anthropic.ToolChoiceAutoParam{
 					DisableParallelToolUse: param.NewOpt(true),
-					Type:                   msg.ToolChoice.OfToolChoiceAuto.Type,
 				},
 			}
 		}

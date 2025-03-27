@@ -42,7 +42,7 @@ func TestNew(t *testing.T) {
 		assert.NotNil(t, agent.cfg)
 		assert.NotNil(t, agent.logger)
 		assert.NotNil(t, agent.communication)
-		assert.Equal(t, anthropic.Client{}, agent.client) // Check for zero value instead of nil
+		assert.Nil(t, agent.client) // No API key set
 	})
 
 	t.Run("applies options", func(t *testing.T) {
@@ -65,6 +65,7 @@ func TestNew(t *testing.T) {
 		assert.Equal(t, ctx, agent.ctx)
 		assert.Equal(t, cfg, agent.cfg)
 		assert.Equal(t, comm, agent.communication)
+		assert.Nil(t, agent.client) // Agent without API key should have nil client
 	})
 
 	t.Run("creates client when API key provided", func(t *testing.T) {
@@ -72,6 +73,8 @@ func TestNew(t *testing.T) {
 		cfg.Anthropic.APIKey = "test-key"
 		agent := New(WithConfig(cfg))
 		assert.NotNil(t, agent.client)
+		// Verify client is properly initialized by checking its type
+		assert.IsType(t, &anthropic.Client{}, agent.client)
 	})
 }
 
