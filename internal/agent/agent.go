@@ -14,6 +14,7 @@ import (
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
+	"github.com/anthropics/anthropic-sdk-go/packages/param"
 )
 
 const (
@@ -86,8 +87,9 @@ func New(opts ...Option) *Agent {
 		opt(a)
 	}
 
-	if a.client == nil && a.cfg.Anthropic.APIKey != "" {
-		a.client = anthropic.NewClient(option.WithAPIKey(a.cfg.Anthropic.APIKey))
+	if a.cfg.Anthropic.APIKey != "" {
+		c := anthropic.NewClient(option.WithAPIKey(a.cfg.Anthropic.APIKey))
+		a.client = &c
 	}
 
 	a.logger.WithGroup("config").With("max_tokens", a.cfg.Anthropic.MaxTokens).With("model", a.cfg.Anthropic.Model).
@@ -165,21 +167,20 @@ func (a *Agent) Run(opts *tool.RunOptions, ctx context.Context) ([]tool.Output, 
 
 	for {
 		msg := anthropic.MessageNewParams{
-			Model:     anthropic.F(a.cfg.Anthropic.Model),
-			MaxTokens: anthropic.F(a.cfg.Anthropic.MaxTokens),
-			System: anthropic.F([]anthropic.TextBlockParam{
-				anthropic.NewTextBlock(prompt),
-			}),
-			Messages:    anthropic.F(messages),
-			Tools:       anthropic.F(convertTools(opts.Tools)),
-			Temperature: anthropic.F(a.cfg.Anthropic.Temperature),
+			Model:       a.cfg.Anthropic.Model,
+			MaxTokens:   a.cfg.Anthropic.MaxTokens,
+			System:      []anthropic.TextBlockParam{{Text: prompt}},
+			Messages:    messages,
+			Tools:       convertTools(opts.Tools),
+			Temperature: param.NewOpt(a.cfg.Anthropic.Temperature),
 		}
 
 		if len(opts.Tools) > 0 {
-			msg.ToolChoice = anthropic.F(anthropic.ToolChoiceUnionParam(anthropic.ToolChoiceAutoParam{
-				DisableParallelToolUse: anthropic.F(true),
-				Type:                   anthropic.F(anthropic.ToolChoiceAutoTypeAuto),
-			}))
+			msg.ToolChoice = anthropic.ToolChoiceUnionParam{
+				OfToolChoiceAuto: &anthropic.ToolChoiceAutoParam{
+					DisableParallelToolUse: param.NewOpt(true),
+				},
+			}
 		}
 
 		message, err := a.client.Messages.New(ctx, msg)
@@ -192,16 +193,14 @@ func (a *Agent) Run(opts *tool.RunOptions, ctx context.Context) ([]tool.Output, 
 
 		toolResults := []anthropic.ContentBlockParamUnion{}
 		for _, block := range message.Content {
-			switch block := block.AsUnion().(type) {
-			case anthropic.TextBlock:
+			switch block.Type {
+			case "text":
 				a.communication.Messages <- Message{
 					Tool:      opts.Caller,
 					Message:   block.Text,
 					Timestamp: time.Now(),
 				}
-				// TODO(t-dabasinskas): Remove this once we update UI
-				logger.With("message", block.Text).Debug("Agent message.")
-			case anthropic.ToolUseBlock:
+			case "tool_use":
 				isError := false
 				resultBlockContent := ""
 				toolInputs := map[string]any{}
@@ -266,14 +265,17 @@ func (a *Agent) Run(opts *tool.RunOptions, ctx context.Context) ([]tool.Output, 
 }
 
 // convertTools converts the tools to the format required by the Anthropic SDK.
-func convertTools(tools map[string]tool.Tool) (anthropicTools []anthropic.ToolUnionUnionParam) {
+func convertTools(tools map[string]tool.Tool) (anthropicTools []anthropic.ToolUnionParam) {
 	for _, t := range tools {
-		anthropicTools = append(anthropicTools, anthropic.ToolParam{
-			Name:        anthropic.F(t.GetName()),
-			Description: anthropic.F(t.GetDescription()),
-			InputSchema: anthropic.F(any(t.GetInputSchema())),
+		anthropicTools = append(anthropicTools, anthropic.ToolUnionParam{
+			OfTool: &anthropic.ToolParam{
+				Name:        t.GetName(),
+				Description: param.NewOpt(t.GetDescription()),
+				InputSchema: anthropic.ToolInputSchemaParam{
+					Properties: t.GetInputSchema().Properties,
+				},
+			},
 		})
 	}
-
 	return
 }

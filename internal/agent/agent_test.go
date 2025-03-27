@@ -65,6 +65,7 @@ func TestNew(t *testing.T) {
 		assert.Equal(t, ctx, agent.ctx)
 		assert.Equal(t, cfg, agent.cfg)
 		assert.Equal(t, comm, agent.communication)
+		assert.Nil(t, agent.client) // Agent without API key should have nil client
 	})
 
 	t.Run("creates client when API key provided", func(t *testing.T) {
@@ -72,6 +73,8 @@ func TestNew(t *testing.T) {
 		cfg.Anthropic.APIKey = "test-key"
 		agent := New(WithConfig(cfg))
 		assert.NotNil(t, agent.client)
+		// Verify client is properly initialized by checking its type
+		assert.IsType(t, &anthropic.Client{}, agent.client)
 	})
 }
 
@@ -98,10 +101,9 @@ func TestConvertTools(t *testing.T) {
 		anthropicTools := convertTools(tools)
 		require.Len(t, anthropicTools, 1)
 
-		toolUnionParam := anthropicTools[0]
-		toolParam, ok := toolUnionParam.(anthropic.ToolParam)
-		require.True(t, ok, "Expected ToolParam type")
-		assert.Equal(t, "test", toolParam.Name.Value)
+		toolParam := anthropicTools[0].OfTool
+		require.NotNil(t, toolParam)
+		assert.Equal(t, "test", toolParam.Name)
 		assert.Equal(t, "A test tool", toolParam.Description.Value)
 		assert.NotNil(t, toolParam.InputSchema)
 	})
@@ -138,19 +140,18 @@ func TestConvertTools(t *testing.T) {
 		foundTool2 := false
 
 		for _, toolUnion := range anthropicTools {
-			toolUnionParam := toolUnion
-			tl, ok := toolUnionParam.(anthropic.ToolParam)
-			require.True(t, ok, "Expected ToolParam type")
+			toolParam := toolUnion.OfTool
+			require.NotNil(t, toolParam)
 
-			name := tl.Name.Value
+			name := toolParam.Name
 			if name == "tool1" {
 				foundTool1 = true
-				assert.Equal(t, "First test tool", tl.Description.Value)
-				assert.NotNil(t, tl.InputSchema)
+				assert.Equal(t, "First test tool", toolParam.Description.Value)
+				assert.NotNil(t, toolParam.InputSchema)
 			} else if name == "tool2" {
 				foundTool2 = true
-				assert.Equal(t, "Second test tool", tl.Description.Value)
-				assert.NotNil(t, tl.InputSchema)
+				assert.Equal(t, "Second test tool", toolParam.Description.Value)
+				assert.NotNil(t, toolParam.InputSchema)
 			}
 		}
 
