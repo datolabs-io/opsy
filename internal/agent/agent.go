@@ -193,7 +193,7 @@ func (a *Agent) Run(opts *tool.RunOptions, ctx context.Context) ([]tool.Output, 
 
 		toolResults := []anthropic.ContentBlockParamUnion{}
 		for _, block := range message.Content {
-			switch block := block.AsUnion().(type) {
+			switch block := block.Type.(type) {
 			case anthropic.TextBlock:
 				a.communication.Messages <- Message{
 					Tool:      opts.Caller,
@@ -267,14 +267,17 @@ func (a *Agent) Run(opts *tool.RunOptions, ctx context.Context) ([]tool.Output, 
 }
 
 // convertTools converts the tools to the format required by the Anthropic SDK.
-func convertTools(tools map[string]tool.Tool) (anthropicTools []anthropic.ToolUnionUnionParam) {
+func convertTools(tools map[string]tool.Tool) (anthropicTools []anthropic.ToolUnionParam) {
 	for _, t := range tools {
-		anthropicTools = append(anthropicTools, anthropic.ToolParam{
-			Name:        anthropic.F(t.GetName()),
-			Description: anthropic.F(t.GetDescription()),
-			InputSchema: anthropic.F(any(t.GetInputSchema())),
+		anthropicTools = append(anthropicTools, anthropic.ToolUnionParam{
+			OfTool: &anthropic.ToolParam{
+				Name:        t.GetName(),
+				Description: param.NewOpt(t.GetDescription()),
+				InputSchema: anthropic.ToolInputSchemaParam{
+					Properties: t.GetInputSchema().Properties,
+				},
+			},
 		})
 	}
-
 	return
 }
