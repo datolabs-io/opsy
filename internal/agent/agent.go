@@ -37,7 +37,7 @@ type Status string
 
 // Agent is a struct that contains the state of the agent.
 type Agent struct {
-	client        *anthropic.Client
+	client        anthropic.Client
 	ctx           context.Context
 	cfg           config.Configuration
 	logger        *slog.Logger
@@ -86,7 +86,7 @@ func New(opts ...Option) *Agent {
 		opt(a)
 	}
 
-	if a.client == nil && a.cfg.Anthropic.APIKey != "" {
+	if a.cfg.Anthropic.APIKey != "" {
 		a.client = anthropic.NewClient(option.WithAPIKey(a.cfg.Anthropic.APIKey))
 	}
 
@@ -118,7 +118,7 @@ func WithLogger(logger *slog.Logger) Option {
 }
 
 // WithClient sets the client for the agent.
-func WithClient(client *anthropic.Client) Option {
+func WithClient(client anthropic.Client) Option {
 	return func(a *Agent) {
 		a.client = client
 	}
