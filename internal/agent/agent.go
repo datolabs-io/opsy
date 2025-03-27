@@ -14,6 +14,7 @@ import (
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
+	"github.com/anthropics/anthropic-sdk-go/packages/param"
 )
 
 const (
@@ -165,21 +166,21 @@ func (a *Agent) Run(opts *tool.RunOptions, ctx context.Context) ([]tool.Output, 
 
 	for {
 		msg := anthropic.MessageNewParams{
-			Model:     anthropic.F(a.cfg.Anthropic.Model),
-			MaxTokens: anthropic.F(a.cfg.Anthropic.MaxTokens),
-			System: anthropic.F([]anthropic.TextBlockParam{
-				anthropic.NewTextBlock(prompt),
-			}),
-			Messages:    anthropic.F(messages),
-			Tools:       anthropic.F(convertTools(opts.Tools)),
-			Temperature: anthropic.F(a.cfg.Anthropic.Temperature),
+			Model:       a.cfg.Anthropic.Model,
+			MaxTokens:   a.cfg.Anthropic.MaxTokens,
+			System:      []anthropic.TextBlockParam{{Text: prompt}},
+			Messages:    messages,
+			Tools:       convertTools(opts.Tools),
+			Temperature: param.NewOpt(a.cfg.Anthropic.Temperature),
 		}
 
 		if len(opts.Tools) > 0 {
-			msg.ToolChoice = anthropic.F(anthropic.ToolChoiceUnionParam(anthropic.ToolChoiceAutoParam{
-				DisableParallelToolUse: anthropic.F(true),
-				Type:                   anthropic.F(anthropic.ToolChoiceAutoTypeAuto),
-			}))
+			msg.ToolChoice = anthropic.ToolChoiceUnionParam{
+				OfToolChoiceAuto: &anthropic.ToolChoiceAutoParam{
+					DisableParallelToolUse: param.NewOpt(true),
+					Type:                   msg.ToolChoice.OfToolChoiceAuto.Type,
+				},
+			}
 		}
 
 		message, err := a.client.Messages.New(ctx, msg)
