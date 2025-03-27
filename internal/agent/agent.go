@@ -193,8 +193,8 @@ func (a *Agent) Run(opts *tool.RunOptions, ctx context.Context) ([]tool.Output, 
 
 		toolResults := []anthropic.ContentBlockParamUnion{}
 		for _, block := range message.Content {
-			switch block := block.Type.(type) {
-			case anthropic.TextBlock:
+			switch block.Type {
+			case "text":
 				a.communication.Messages <- Message{
 					Tool:      opts.Caller,
 					Message:   block.Text,
@@ -202,7 +202,7 @@ func (a *Agent) Run(opts *tool.RunOptions, ctx context.Context) ([]tool.Output, 
 				}
 				// TODO(t-dabasinskas): Remove this once we update UI
 				logger.With("message", block.Text).Debug("Agent message.")
-			case anthropic.ToolUseBlock:
+			case "tool_use":
 				isError := false
 				resultBlockContent := ""
 				toolInputs := map[string]any{}
