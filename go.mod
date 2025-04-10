@@ -1,9 +1,10 @@
 module github.com/datolabs-io/opsy
 
 go 1.24.0
+
 require (
 	github.com/anthropics/anthropic-sdk-go v0.2.0-beta.3
-	github.com/charmbracelet/bubbles v0.20.0
+	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.4
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/invopop/jsonschema v0.13.0
