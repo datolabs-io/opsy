@@ -1,7 +1,0 @@
-output:
-  formats:
-    - format: colored-line-number
-
-linters-settings:
-  lll:
-    line-length: 120
