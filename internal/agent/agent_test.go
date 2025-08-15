@@ -144,11 +144,12 @@ func TestConvertTools(t *testing.T) {
 			require.NotNil(t, toolParam)
 
 			name := toolParam.Name
-			if name == "tool1" {
+			switch name {
+			case "tool1":
 				foundTool1 = true
 				assert.Equal(t, "First test tool", toolParam.Description.Value)
 				assert.NotNil(t, toolParam.InputSchema)
-			} else if name == "tool2" {
+			case "tool2":
 				foundTool2 = true
 				assert.Equal(t, "Second test tool", toolParam.Description.Value)
 				assert.NotNil(t, toolParam.InputSchema)

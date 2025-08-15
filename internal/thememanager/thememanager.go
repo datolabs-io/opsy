@@ -91,7 +91,11 @@ func (tm *ThemeManager) LoadTheme(name string) (err error) {
 		return fmt.Errorf("%s: %v", ErrThemeNotFound, err)
 	}
 
-	defer file.Close()
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			err = fmt.Errorf("failed to close file: %v", closeErr)
+		}
+	}()
 
 	data, err = io.ReadAll(file)
 	if err != nil {

@@ -24,25 +24,47 @@ func setupTestEnv(t *testing.T) (string, func()) {
 	origExecShell := os.Getenv("OPSY_TOOLS_EXEC_SHELL")
 
 	// Set up test environment
-	os.Setenv("HOME", tempDir)
-	os.Unsetenv("ANTHROPIC_API_KEY")     // Ensure API key is not set
-	os.Unsetenv("OPSY_LOGGING_LEVEL")    // Ensure log level is not set
-	os.Unsetenv("OPSY_TOOLS_EXEC_SHELL") // Ensure shell is not set
+	if err := os.Setenv("HOME", tempDir); err != nil {
+		t.Fatalf("failed to set HOME environment variable: %v", err)
+	}
+	if err := os.Unsetenv("ANTHROPIC_API_KEY"); err != nil { // Ensure API key is not set
+		t.Fatalf("failed to unset ANTHROPIC_API_KEY environment variable: %v", err)
+	}
+	if err := os.Unsetenv("OPSY_LOGGING_LEVEL"); err != nil { // Ensure log level is not set
+		t.Fatalf("failed to unset OPSY_LOGGING_LEVEL environment variable: %v", err)
+	}
+	if err := os.Unsetenv("OPSY_TOOLS_EXEC_SHELL"); err != nil { // Ensure shell is not set
+		t.Fatalf("failed to unset OPSY_TOOLS_EXEC_SHELL environment variable: %v", err)
+	}
 
 	// Return cleanup function
 	cleanup := func() {
-		os.RemoveAll(tempDir)
-		os.Setenv("HOME", origHome)
-		os.Setenv("ANTHROPIC_API_KEY", origAPIKey)
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Logf("failed to remove temp directory: %v", err)
+		}
+		if err := os.Setenv("HOME", origHome); err != nil {
+			t.Logf("failed to restore HOME environment variable: %v", err)
+		}
+		if err := os.Setenv("ANTHROPIC_API_KEY", origAPIKey); err != nil {
+			t.Logf("failed to restore ANTHROPIC_API_KEY environment variable: %v", err)
+		}
 		if origLogLevel != "" {
-			os.Setenv("OPSY_LOGGING_LEVEL", origLogLevel)
+			if err := os.Setenv("OPSY_LOGGING_LEVEL", origLogLevel); err != nil {
+				t.Logf("failed to restore OPSY_LOGGING_LEVEL environment variable: %v", err)
+			}
 		} else {
-			os.Unsetenv("OPSY_LOGGING_LEVEL")
+			if err := os.Unsetenv("OPSY_LOGGING_LEVEL"); err != nil {
+				t.Logf("failed to unset OPSY_LOGGING_LEVEL environment variable: %v", err)
+			}
 		}
 		if origExecShell != "" {
-			os.Setenv("OPSY_TOOLS_EXEC_SHELL", origExecShell)
+			if err := os.Setenv("OPSY_TOOLS_EXEC_SHELL", origExecShell); err != nil {
+				t.Logf("failed to restore OPSY_TOOLS_EXEC_SHELL environment variable: %v", err)
+			}
 		} else {
-			os.Unsetenv("OPSY_TOOLS_EXEC_SHELL")
+			if err := os.Unsetenv("OPSY_TOOLS_EXEC_SHELL"); err != nil {
+				t.Logf("failed to unset OPSY_TOOLS_EXEC_SHELL environment variable: %v", err)
+			}
 		}
 		viper.Reset()
 	}
@@ -74,8 +96,12 @@ func TestNewConfigManager(t *testing.T) {
 	})
 
 	t.Run("binds environment variables", func(t *testing.T) {
-		os.Setenv("ANTHROPIC_API_KEY", "test-api-key")
-		os.Setenv("OPSY_LOGGING_LEVEL", "debug")
+		if err := os.Setenv("ANTHROPIC_API_KEY", "test-api-key"); err != nil {
+			t.Fatalf("failed to set ANTHROPIC_API_KEY environment variable: %v", err)
+		}
+		if err := os.Setenv("OPSY_LOGGING_LEVEL", "debug"); err != nil {
+			t.Fatalf("failed to set OPSY_LOGGING_LEVEL environment variable: %v", err)
+		}
 
 		manager := New()
 		assert.NotNil(t, manager)
@@ -96,7 +122,9 @@ func TestLoadConfig_DefaultValues(t *testing.T) {
 	_, cleanup := setupTestEnv(t)
 	defer cleanup()
 
-	os.Setenv("ANTHROPIC_API_KEY", "test-api-key")
+	if err := os.Setenv("ANTHROPIC_API_KEY", "test-api-key"); err != nil {
+		t.Fatalf("failed to set ANTHROPIC_API_KEY environment variable: %v", err)
+	}
 	manager := New()
 	err := manager.LoadConfig()
 	require.NoError(t, err)
@@ -249,14 +277,28 @@ func TestLoadConfig_EnvironmentVariables(t *testing.T) {
 	defer cleanup()
 
 	// Set environment variables
-	os.Setenv("ANTHROPIC_API_KEY", "test-api-key")
-	os.Setenv("OPSY_LOGGING_LEVEL", "debug")
-	os.Setenv("OPSY_ANTHROPIC_MODEL", "claude-3-opus")
-	os.Setenv("OPSY_ANTHROPIC_TEMPERATURE", "0.8")
+	if err := os.Setenv("ANTHROPIC_API_KEY", "test-api-key"); err != nil {
+		t.Fatalf("failed to set ANTHROPIC_API_KEY environment variable: %v", err)
+	}
+	if err := os.Setenv("OPSY_LOGGING_LEVEL", "debug"); err != nil {
+		t.Fatalf("failed to set OPSY_LOGGING_LEVEL environment variable: %v", err)
+	}
+	if err := os.Setenv("OPSY_ANTHROPIC_MODEL", "claude-3-opus"); err != nil {
+		t.Fatalf("failed to set OPSY_ANTHROPIC_MODEL environment variable: %v", err)
+	}
+	if err := os.Setenv("OPSY_ANTHROPIC_TEMPERATURE", "0.8"); err != nil {
+		t.Fatalf("failed to set OPSY_ANTHROPIC_TEMPERATURE environment variable: %v", err)
+	}
 	defer func() {
-		os.Unsetenv("OPSY_LOGGING_LEVEL")
-		os.Unsetenv("OPSY_ANTHROPIC_MODEL")
-		os.Unsetenv("OPSY_ANTHROPIC_TEMPERATURE")
+		if err := os.Unsetenv("OPSY_LOGGING_LEVEL"); err != nil {
+			t.Logf("failed to unset OPSY_LOGGING_LEVEL environment variable: %v", err)
+		}
+		if err := os.Unsetenv("OPSY_ANTHROPIC_MODEL"); err != nil {
+			t.Logf("failed to unset OPSY_ANTHROPIC_MODEL environment variable: %v", err)
+		}
+		if err := os.Unsetenv("OPSY_ANTHROPIC_TEMPERATURE"); err != nil {
+			t.Logf("failed to unset OPSY_ANTHROPIC_TEMPERATURE environment variable: %v", err)
+		}
 	}()
 
 	manager := New()
@@ -322,7 +364,9 @@ func TestGetLogger(t *testing.T) {
 
 			// Clean up the log file
 			if !tt.expectError {
-				os.Remove(tt.logPath)
+				if err := os.Remove(tt.logPath); err != nil {
+					t.Logf("failed to remove log file: %v", err)
+				}
 			}
 		})
 	}
@@ -338,7 +382,9 @@ func TestLoadConfig_DirectoryCreation(t *testing.T) {
 		defer cleanup()
 
 		// Set required API key
-		os.Setenv("ANTHROPIC_API_KEY", "test-api-key")
+		if err := os.Setenv("ANTHROPIC_API_KEY", "test-api-key"); err != nil {
+			t.Fatalf("failed to set ANTHROPIC_API_KEY environment variable: %v", err)
+		}
 
 		manager := New()
 		err := manager.LoadConfig()
@@ -570,7 +616,9 @@ func TestGetLogger_LogLevels(t *testing.T) {
 			assert.NotNil(t, logger)
 
 			// Clean up the log file
-			os.Remove(manager.configuration.Logging.Path)
+			if err := os.Remove(manager.configuration.Logging.Path); err != nil {
+				t.Logf("failed to remove log file: %v", err)
+			}
 		})
 	}
 }
@@ -585,7 +633,9 @@ func TestLoadConfig_ReadErrors(t *testing.T) {
 		defer cleanup()
 
 		// Set required API key
-		os.Setenv("ANTHROPIC_API_KEY", "test-api-key")
+		if err := os.Setenv("ANTHROPIC_API_KEY", "test-api-key"); err != nil {
+			t.Fatalf("failed to set ANTHROPIC_API_KEY environment variable: %v", err)
+		}
 
 		// Create an invalid YAML file
 		configDir := filepath.Join(tempDir, ".opsy")
@@ -664,8 +714,14 @@ ui:
 
 			// Set environment variable if specified
 			if tt.envTheme != "" {
-				os.Setenv("OPSY_UI_THEME", tt.envTheme)
-				defer os.Unsetenv("OPSY_UI_THEME")
+				if err := os.Setenv("OPSY_UI_THEME", tt.envTheme); err != nil {
+					t.Fatalf("failed to set OPSY_UI_THEME environment variable: %v", err)
+				}
+				defer func() {
+					if err := os.Unsetenv("OPSY_UI_THEME"); err != nil {
+						t.Logf("failed to unset OPSY_UI_THEME environment variable: %v", err)
+					}
+				}()
 			}
 
 			manager := New()
@@ -881,22 +937,46 @@ tools:
 
 			// Set environment variables if specified
 			if tt.envTimeout != "" {
-				os.Setenv("OPSY_TOOLS_TIMEOUT", tt.envTimeout)
-				defer os.Unsetenv("OPSY_TOOLS_TIMEOUT")
+				if err := os.Setenv("OPSY_TOOLS_TIMEOUT", tt.envTimeout); err != nil {
+					t.Fatalf("failed to set OPSY_TOOLS_TIMEOUT environment variable: %v", err)
+				}
+				defer func() {
+					if err := os.Unsetenv("OPSY_TOOLS_TIMEOUT"); err != nil {
+						t.Logf("failed to unset OPSY_TOOLS_TIMEOUT environment variable: %v", err)
+					}
+				}()
 			}
 			if tt.envExecTimeout != "" {
-				os.Setenv("OPSY_TOOLS_EXEC_TIMEOUT", tt.envExecTimeout)
-				defer os.Unsetenv("OPSY_TOOLS_EXEC_TIMEOUT")
+				if err := os.Setenv("OPSY_TOOLS_EXEC_TIMEOUT", tt.envExecTimeout); err != nil {
+					t.Fatalf("failed to set OPSY_TOOLS_EXEC_TIMEOUT environment variable: %v", err)
+				}
+				defer func() {
+					if err := os.Unsetenv("OPSY_TOOLS_EXEC_TIMEOUT"); err != nil {
+						t.Logf("failed to unset OPSY_TOOLS_EXEC_TIMEOUT environment variable: %v", err)
+					}
+				}()
 			}
 			if tt.envExecShell != "" {
-				os.Setenv("OPSY_TOOLS_EXEC_SHELL", tt.envExecShell)
-				defer os.Unsetenv("OPSY_TOOLS_EXEC_SHELL")
+				if err := os.Setenv("OPSY_TOOLS_EXEC_SHELL", tt.envExecShell); err != nil {
+					t.Fatalf("failed to set OPSY_TOOLS_EXEC_SHELL environment variable: %v", err)
+				}
+				defer func() {
+					if err := os.Unsetenv("OPSY_TOOLS_EXEC_SHELL"); err != nil {
+						t.Logf("failed to unset OPSY_TOOLS_EXEC_SHELL environment variable: %v", err)
+					}
+				}()
 			}
 
 			// For the default test case, we need to set the default shell to an available one
 			if tt.name == "default timeouts and shell" {
-				os.Setenv("OPSY_TOOLS_EXEC_SHELL", availableShell)
-				defer os.Unsetenv("OPSY_TOOLS_EXEC_SHELL")
+				if err := os.Setenv("OPSY_TOOLS_EXEC_SHELL", availableShell); err != nil {
+					t.Fatalf("failed to set OPSY_TOOLS_EXEC_SHELL environment variable: %v", err)
+				}
+				defer func() {
+					if err := os.Unsetenv("OPSY_TOOLS_EXEC_SHELL"); err != nil {
+						t.Logf("failed to unset OPSY_TOOLS_EXEC_SHELL environment variable: %v", err)
+					}
+				}()
 				tt.expectShell = availableShell
 			}
 
