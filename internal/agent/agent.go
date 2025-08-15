@@ -167,7 +167,7 @@ func (a *Agent) Run(opts *tool.RunOptions, ctx context.Context) ([]tool.Output, 
 
 	for {
 		msg := anthropic.MessageNewParams{
-			Model:       a.cfg.Anthropic.Model,
+			Model:       anthropic.Model(a.cfg.Anthropic.Model),
 			MaxTokens:   a.cfg.Anthropic.MaxTokens,
 			System:      []anthropic.TextBlockParam{{Text: prompt}},
 			Messages:    messages,
@@ -177,7 +177,7 @@ func (a *Agent) Run(opts *tool.RunOptions, ctx context.Context) ([]tool.Output, 
 
 		if len(opts.Tools) > 0 {
 			msg.ToolChoice = anthropic.ToolChoiceUnionParam{
-				OfToolChoiceAuto: &anthropic.ToolChoiceAutoParam{
+				OfAuto: &anthropic.ToolChoiceAutoParam{
 					DisableParallelToolUse: param.NewOpt(true),
 				},
 			}
