@@ -5,20 +5,20 @@
 class Opsy < Formula
   desc "Your AI-Powered SRE Colleague"
   homepage "https://github.com/datolabs-io/opsy"
-  version "0.0.2"
+  version "0.0.3"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/datolabs-io/opsy/releases/download/v0.0.2/opsy_Darwin_x86_64.tar.gz"
-      sha256 "ab3b4bbe0c6fc1ee551489aed0822fb688142443ed1037c8cabaaab1c6eeb955"
+      url "https://github.com/datolabs-io/opsy/releases/download/v0.0.3/opsy_Darwin_x86_64.tar.gz"
+      sha256 "a194ab7872fafdbde32d6e79d64f595656180df026098c942ce8275965af808d"
 
       def install
         bin.install "opsy"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/datolabs-io/opsy/releases/download/v0.0.2/opsy_Darwin_arm64.tar.gz"
-      sha256 "e2445764f424be360d0c3462a402e2aee384e64d68634213b642373983d57a8e"
+      url "https://github.com/datolabs-io/opsy/releases/download/v0.0.3/opsy_Darwin_arm64.tar.gz"
+      sha256 "b12a06af370f067db1af94ea50d6e4734d3396821f8d1b769f84e2d4cf308c22"
 
       def install
         bin.install "opsy"
@@ -27,34 +27,25 @@ class Opsy < Formula
   end
 
   on_linux do
-    if Hardware::CPU.intel?
-      if Hardware::CPU.is_64_bit?
-        url "https://github.com/datolabs-io/opsy/releases/download/v0.0.2/opsy_Linux_x86_64.tar.gz"
-        sha256 "c3f0ed8587d91a29291f737e8069d8074605f6c582fb1a3588c5093b2029419f"
-
-        def install
-          bin.install "opsy"
-        end
+    if Hardware::CPU.intel? and Hardware::CPU.is_64_bit?
+      url "https://github.com/datolabs-io/opsy/releases/download/v0.0.3/opsy_Linux_x86_64.tar.gz"
+      sha256 "bb93ebbd0b18e15661e32de5cf84107c64ba7893bbcee3a2d44a00f93277868b"
+      def install
+        bin.install "opsy"
       end
     end
-    if Hardware::CPU.arm?
-      if !Hardware::CPU.is_64_bit?
-        url "https://github.com/datolabs-io/opsy/releases/download/v0.0.2/opsy_Linux_armv6.tar.gz"
-        sha256 "a05aff97bc95e9870cc561823f76e313873ee4404fcb6e31b879d8ba32af553a"
-
-        def install
-          bin.install "opsy"
-        end
+    if Hardware::CPU.arm? and !Hardware::CPU.is_64_bit?
+      url "https://github.com/datolabs-io/opsy/releases/download/v0.0.3/opsy_Linux_armv6.tar.gz"
+      sha256 "e6c8adc660bf05035eadcdfe4a435cb4b2f3e97ae0a1e06405a258045d3839dd"
+      def install
+        bin.install "opsy"
       end
     end
-    if Hardware::CPU.arm?
-      if Hardware::CPU.is_64_bit?
-        url "https://github.com/datolabs-io/opsy/releases/download/v0.0.2/opsy_Linux_arm64.tar.gz"
-        sha256 "52b85f8d365fb1029e5fbf0048619599a08902307d8523afc864666ebd9b77bd"
-
-        def install
-          bin.install "opsy"
-        end
+    if Hardware::CPU.arm? and Hardware::CPU.is_64_bit?
+      url "https://github.com/datolabs-io/opsy/releases/download/v0.0.3/opsy_Linux_arm64.tar.gz"
+      sha256 "85f71aa2969ebb2f4ae17e0f89005ff21527bf4a181fadfe6bdfe7d59c2c98c7"
+      def install
+        bin.install "opsy"
       end
     end
   end
