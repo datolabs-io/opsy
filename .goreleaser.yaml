@@ -56,17 +56,25 @@ release:
 
     Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
 
-brews:
-  - commit_author:
-      name: datolabs-bot
-      email: github-bot@datolabs.io
-    commit_msg_template: "chore(brew): formula update for {{ .ProjectName }} version {{ .Tag }}"
-    directory: Formula
+homebrew_casks:
+  - name: opsy
+    binaries: [opsy]
     homepage: https://github.com/datolabs-io/opsy
     description: Your AI-Powered SRE Colleague
+    license: Apache-2.0
+    # The binaries are not notarized; without this macOS refuses to run them.
+    hooks:
+      post:
+        install_steps: |
+          on_macos do
+            run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ .StagedPath }}/opsy"]
+          end
+    skip_upload: auto
+    commit_msg_template: "feat: opsy {{ .Tag }}"
+    # The datolabs-automation App, through HOMEBREW_TAP_TOKEN, pushes the cask
+    # to the tap's main branch.
     repository:
       owner: datolabs-io
-      name: opsy
-      pull_request:
-        enabled: false
-      token: "{{ .Env.GITHUB_TOKEN }}"
+      name: homebrew-tap
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
